@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>PII Kontrollü Chat - Görsel Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        #chat-box { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; background-color: #f9f9f9; margin-bottom: 20px; }
+        .user-msg { text-align: right; margin: 5px 0; }
+        .bot-msg { text-align: left; margin: 5px 0; color: #333; }
+        .blocked-msg { color: red; }
+    </style>
+</head>
+<body>
+    <h2>PII Kontrollü Chat Arayüzü</h2>
+
+    <div id="chat-box">
+        <div class="user-msg"><strong>Sen:</strong> Bu benim TC numaram 12345678901</div>
+        <div class="bot-msg blocked-msg"><strong>❌ Engellendi:</strong> TC Kimlik No bulundu</div>
+        <div class="user-msg"><strong>Sen:</strong> Selam, nasıl yardımcı olursun?</div>
+        <div class="bot-msg"><strong>🤖 DeepSeek:</strong> Elbette! Size nasıl yardımcı olabilirim?</div>
+    </div>
+
+    <form>
+        <textarea rows="3" cols="60" placeholder="Mesajınızı yazın..."></textarea><br><br>
+
+        <label><input type="checkbox" checked> TC Kimlik No</label><br>
+        <label><input type="checkbox"> Mastercard</label><br>
+        <label><input type="checkbox"> Visa</label><br>
+        <label><input type="checkbox" checked> E-posta</label><br>
+        <label><input type="checkbox"> Telefon</label><br><br>
+
+        <label>TC Kimlik engelleme limiti:
+            <input type="number" min="1" value="3">
+        </label><br><br>
+
+        <input type="submit" value="Gönder">
+    </form>
+</body>
+</html>
