@@ -1,0 +1,7 @@
+# Runtime dependencies for the server and the LLM client.
+# The detection engine in pii_guard.py needs none of these.
+requests>=2.31,<3
+Flask>=3.0,<4
+
+# Tests
+pytest>=8.0,<9

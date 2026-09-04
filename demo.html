@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PII Guard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #dde2e6;
+    --sheet: #fbfbfa;
+    --ink: #151e27;
+    --ink-soft: #55636f;
+    --rule: #b9c2c9;
+    --bar: #131a21;
+    --oxide: #8c2f1e;
+    --indigo: #2b3c8c;
+    --sans: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 3rem 1.25rem 5rem;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 46rem; margin: 0 auto; }
+
+  h1 {
+    font-size: clamp(2.1rem, 6vw, 3.1rem);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.02;
+    margin: 0 0 0.6rem;
+  }
+
+  .lede {
+    max-width: 34rem;
+    margin: 0 0 2.5rem;
+    color: var(--ink-soft);
+    font-size: 1.05rem;
+  }
+
+  .sheet {
+    background: var(--sheet);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .sheet h2 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0 0 0.25rem;
+  }
+
+  .sheet p.hint {
+    margin: 0 0 1rem;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 8.5rem;
+    padding: 0.85rem;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    background: #fff;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 0.87rem;
+    line-height: 1.7;
+    resize: vertical;
+  }
+
+  textarea:focus-visible,
+  button:focus-visible,
+  input:focus-visible + span {
+    outline: 2px solid var(--indigo);
+    outline-offset: 2px;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+    margin-top: 1rem;
+  }
+
+  .modes { display: flex; gap: 0.4rem; }
+
+  .modes input { position: absolute; opacity: 0; width: 0; height: 0; }
+
+  .modes span {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    background: #fff;
+  }
+
+  .modes input:checked + span {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--sheet);
+  }
+
+  button {
+    padding: 0.5rem 1.1rem;
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    background: var(--ink);
+    color: var(--sheet);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  button.secondary { background: transparent; color: var(--ink); }
+  button[disabled] { opacity: 0.45; cursor: default; }
+
+  .verdict {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    padding-bottom: 0.9rem;
+    margin-bottom: 0.9rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .verdict strong { font-size: 1.05rem; }
+  .verdict.stopped strong { color: var(--oxide); }
+  .verdict.clean strong { color: var(--indigo); }
+  .verdict span { color: var(--ink-soft); font-size: 0.9rem; }
+
+  .inspected {
+    font-family: var(--mono);
+    font-size: 0.87rem;
+    line-height: 2;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  mark.hit {
+    position: relative;
+    background: none;
+    color: transparent;
+    border-radius: 1px;
+  }
+
+  mark.hit::after {
+    content: "";
+    position: absolute;
+    inset: -0.15em -0.15em;
+    background: var(--bar);
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: wipe 0.32s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+    animation-delay: calc(var(--i) * 70ms);
+  }
+
+  @keyframes wipe { to { transform: scaleX(1); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    mark.hit::after { animation: none; transform: scaleX(1); }
+  }
+
+  .ledger { list-style: none; margin: 1.1rem 0 0; padding: 0.9rem 0 0; border-top: 1px solid var(--rule); }
+
+  .ledger li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.3rem 0;
+    font-size: 0.9rem;
+  }
+
+  .ledger li span:last-child { font-family: var(--mono); color: var(--ink-soft); }
+
+  .forwarded {
+    margin-top: 1.1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .forwarded h3 { font-size: 0.9rem; margin: 0 0 0.5rem; }
+
+  .forwarded pre {
+    margin: 0;
+    padding: 0.75rem;
+    background: #f0f2f3;
+    border-radius: 2px;
+    font-family: var(--mono);
+    font-size: 0.83rem;
+    line-height: 1.75;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .note { margin-top: 1.5rem; color: var(--ink-soft); font-size: 0.85rem; }
+  .note code { font-family: var(--mono); font-size: 0.95em; }
+
+  .error { color: var(--oxide); font-size: 0.9rem; margin: 0; }
+
+  footer {
+    margin-top: 2.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+  }
+
+  footer a { color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>See what leaves your machine</h1>
+  <p class="lede">
+    Paste a prompt below. PII Guard checks it for payment cards, IBANs, Turkish
+    national identity numbers, email addresses and phone numbers, then shows you
+    exactly what a language model would receive.
+  </p>
+
+  <div class="sheet">
+    <h2>Prompt</h2>
+    <p class="hint">Every number in the sample is synthetic and passes its checksum.</p>
+    <textarea id="prompt" aria-label="Prompt to inspect" spellcheck="false">Hi, please look into the failed payment for customer 10000000146. The card ending in 1111 is 4111 1111 1111 1111 and the refund should go to TR33 0006 1005 1978 6457 8413 26. Reach her on +90 532 123 45 67 or ada@example.com.</textarea>
+
+    <div class="controls">
+      <div class="modes" role="radiogroup" aria-label="Policy mode">
+        <label><input type="radio" name="mode" value="redact" checked><span>Mask and send</span></label>
+        <label><input type="radio" name="mode" value="block"><span>Refuse</span></label>
+        <label><input type="radio" name="mode" value="audit"><span>Record only</span></label>
+      </div>
+      <button id="inspect" type="button">Inspect prompt</button>
+      <button id="send" type="button" class="secondary">Send to model</button>
+    </div>
+  </div>
+
+  <div class="sheet" id="result" hidden>
+    <div class="verdict" id="verdict"></div>
+    <div class="inspected" id="inspected"></div>
+    <ul class="ledger" id="ledger"></ul>
+    <div class="forwarded" id="forwarded" hidden>
+      <h3 id="forwarded-title">Sent to the model</h3>
+      <pre id="forwarded-body"></pre>
+    </div>
+  </div>
+
+  <p class="note">
+    The audit log records the decision, the counts and the character length. It
+    never records the prompt or the values found in it. Set
+    <code>PII_GUARD_LOG_SALT</code> to add a keyed fingerprint per value, which
+    tells repeat leaks apart from new ones without storing either.
+  </p>
+
+  <footer>
+    Local demo. No authentication, no rate limiting, no transport security.
+    Run it on localhost only.
+  </footer>
+</div>
+
+<script>
+  const promptEl = document.getElementById("prompt");
+  const resultEl = document.getElementById("result");
+  const verdictEl = document.getElementById("verdict");
+  const inspectedEl = document.getElementById("inspected");
+  const ledgerEl = document.getElementById("ledger");
+  const forwardedEl = document.getElementById("forwarded");
+  const forwardedTitle = document.getElementById("forwarded-title");
+  const forwardedBody = document.getElementById("forwarded-body");
+  const inspectBtn = document.getElementById("inspect");
+  const sendBtn = document.getElementById("send");
+
+  const LABELS = {
+    credit_card: "Payment card",
+    tckn: "Turkish national ID",
+    iban: "IBAN",
+    email: "Email address",
+    phone: "Phone number"
+  };
+
+  const VERDICTS = {
+    allow: ["clean", "Nothing sensitive found"],
+    redact: ["stopped", "Masked before sending"],
+    block: ["stopped", "Refused"]
+  };
+
+  function escapeHtml(value) {
+    return value.replace(/[&<>"']/g, ch => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[ch]));
+  }
+
+  function drawBars(text, spans) {
+    let html = "";
+    let cursor = 0;
+    spans
+      .slice()
+      .sort((a, b) => a.start - b.start)
+      .forEach((span, index) => {
+        html += escapeHtml(text.slice(cursor, span.start));
+        html += `<mark class="hit" style="--i:${index}" title="${LABELS[span.kind] || span.kind}">`;
+        html += escapeHtml(text.slice(span.start, span.end));
+        html += "</mark>";
+        cursor = span.end;
+      });
+    return html + escapeHtml(text.slice(cursor));
+  }
+
+  function mode() {
+    return document.querySelector('input[name="mode"]:checked').value;
+  }
+
+  async function call(endpoint) {
+    const text = promptEl.value;
+    if (!text.trim()) {
+      showError("Type a prompt first.");
+      return;
+    }
+    inspectBtn.disabled = true;
+    sendBtn.disabled = true;
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, mode: mode() })
+      });
+      const data = await response.json();
+      if (data.error && !data.action) {
+        showError(data.error);
+        return;
+      }
+      render(text, data);
+    } catch (err) {
+      showError("The server is not reachable. Start it with: python server.py");
+    } finally {
+      inspectBtn.disabled = false;
+      sendBtn.disabled = false;
+    }
+  }
+
+  function showError(message) {
+    resultEl.hidden = false;
+    verdictEl.className = "verdict stopped";
+    verdictEl.innerHTML = `<strong>Could not inspect</strong><span>${escapeHtml(message)}</span>`;
+    inspectedEl.textContent = "";
+    ledgerEl.innerHTML = "";
+    forwardedEl.hidden = true;
+  }
+
+  function render(text, data) {
+    const [tone, headline] = VERDICTS[data.action] || ["", data.action];
+    resultEl.hidden = false;
+    verdictEl.className = `verdict ${tone}`;
+    verdictEl.innerHTML =
+      `<strong>${headline}</strong><span>${escapeHtml(data.summary)}</span>`;
+
+    inspectedEl.innerHTML = drawBars(text, data.spans);
+
+    ledgerEl.innerHTML = data.findings.map(item => {
+      const label = LABELS[item.kind] || item.kind;
+      const detail = item.subtype ? `${item.subtype} · ${item.count}` : String(item.count);
+      return `<li><span>${escapeHtml(label)}</span><span>${escapeHtml(detail)}</span></li>`;
+    }).join("");
+
+    if (data.reply) {
+      forwardedEl.hidden = false;
+      forwardedTitle.textContent = "Model reply";
+      forwardedBody.textContent = data.reply;
+    } else if (data.error) {
+      forwardedEl.hidden = false;
+      forwardedTitle.textContent = "Model unavailable";
+      forwardedBody.textContent = data.error;
+    } else if (data.action === "block") {
+      forwardedEl.hidden = false;
+      forwardedTitle.textContent = "Sent to the model";
+      forwardedBody.textContent = "Nothing. The prompt was refused.";
+    } else {
+      forwardedEl.hidden = false;
+      forwardedTitle.textContent = "Sent to the model";
+      forwardedBody.textContent = data.forwarded;
+    }
+  }
+
+  inspectBtn.addEventListener("click", () => call("/api/scan"));
+  sendBtn.addEventListener("click", () => call("/api/chat"));
+</script>
+</body>
+</html>
