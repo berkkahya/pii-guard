@@ -1,5 +1,7 @@
 # PII Guard
 
+![PII Guard demo](docs/demo.png)
+
 Middleware that inspects a prompt before it reaches a large language model. It
 finds payment card numbers, IBANs, Turkish national identity numbers, email
 addresses and phone numbers, then blocks the prompt, masks the values, or
